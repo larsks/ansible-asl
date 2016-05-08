@@ -20,6 +20,11 @@
       border: thin solid #c0c0c0;
     }
 
+    td.graph-container {
+      border: none;
+      text-align: right;
+    }
+
     pre {
       white-space: pre-wrap;
     }
@@ -45,6 +50,19 @@
       display: none;
       width: 100%;
     }
+
+    .graph {
+      width: 10em;
+      height: 2em;
+      display: inline-block;
+    }
+
+    .bar {
+      display: inline-block;
+      background-color: red;
+      height: 2em;
+    }
+
     </style>
 
     <script src="jquery-2.2.3.min.js"></script>
@@ -57,6 +75,9 @@
         else
           ele.css('display', 'none');
       });
+      $(".result").click(function(){
+        $(this).css('display', 'none');
+      });
     });
     </script>
   </head>
@@ -64,6 +85,7 @@
   <body>
     <table id="tasks">
       <tr>
+        <th class="graph-container">Duration (graph)</th>
         <th>Offset</th>
         <th>Duration</th>
         <th>Playbook</th>
@@ -73,8 +95,16 @@
         <th>Module</th>
         <th>Status</th>
       </tr>
-      {% for task in tasks() if task.playbook %}
+      {% for task in tasks if task.playbook %}
       <tr class="task status-{{ task.status }} {% if task.ignore_errors %}ignored{% endif %}">
+        <td class="graph-container">
+          {% set pct_duration = ((task.task_duration/max_duration)*100)|int %}
+          <div class="graph">
+            <div class="bar percentage-{{ pct_duration }}"
+              style="width: {{ pct_duration/10 }}em">
+            </div>
+          </div>
+        </td>
         <td>{{ task.offset }}</td>
         <td>{{ "%.4f"|format(task.task_duration|default(0)) }}</td>
         <td>{{ task.playbook|basename }}</td>
@@ -85,7 +115,8 @@
         <td>{{ task.status }}</td>
       </tr>
       <tr class="result">
-        <td colspan="7">
+        <td class="graph-container"></td>
+        <td colspan="8">
           <pre>{{ task.result|to_json(indent=2, sort_keys=True) }}</pre>
         </td>
       </tr>
