@@ -31,15 +31,16 @@ class CallbackModule(CallbackBase):
         return datetime.datetime.strptime(timestr, '%Y-%m-%d %H:%M:%S.%f')
 
     def log_task_result(self, status, result, ignored=False):
-        now = time.time()
+        now = datetime.datetime.now()
 
         if self._task.get_path() is None:
             playbook_path, lineno = "", 0
         else:
             playbook_path, lineno = self._task.get_path().split(':', 1)
 
+        time_task_delta = now - self._task_start
+
         rec = {
-                'when': now,
                 'playbook': playbook_path,
                 'lineno': lineno,
                 'play': self._play.get_name(),
@@ -49,18 +50,10 @@ class CallbackModule(CallbackBase):
                 'status': status,
                 'result': result._result,
                 'ignore_errors': ignored,
+                'time_task_start': str(self._task_start),
+                'time_task_end': str(now),
+                'task_duration': (now-self._task_start).total_seconds(),
         }
-
-        if 'start' in result._result:
-            time_task_start = self.parse_time(result._result['start'])
-            time_task_end = self.parse_time(result._result['end'])
-            time_task_delta = time_task_end - time_task_start
-
-            rec.update({
-                    'time_task_start': str(time_task_start),
-                    'time_task_end': str(time_task_end),
-                    'task_duration': time_task_delta.total_seconds(),
-            })
 
         with open(self.logfile, 'a') as fd:
             json.dump(rec, fd)
@@ -71,6 +64,7 @@ class CallbackModule(CallbackBase):
 
     def v2_playbook_on_task_start(self, task, is_conditional):
         self._task = task
+        self._task_start = datetime.datetime.now()
 
     def v2_playbook_on_play_start(self, play):
         self._play = play

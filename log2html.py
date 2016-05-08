@@ -9,12 +9,13 @@ def tasks():
     start = None
     for line in sys.stdin:
         task = json.loads(line)
-        task['when'] = datetime.datetime.fromtimestamp(task['when'])
+        time_task_start = datetime.datetime.strptime(task['time_task_start'],
+                                                     '%Y-%m-%d %H:%M:%S.%f')
 
         if start is None:
-            start = task['when']
+            start = time_task_start
 
-        task['offset'] = task['when'] - start
+        task['offset'] = time_task_start - start
 
         yield task
 
