@@ -1,8 +1,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys
-import pprint
+import datetime
 import json
 import time
 
@@ -28,6 +27,9 @@ class CallbackModule(CallbackBase):
         with open(self.logfile, 'w'):
             pass
 
+    def parse_time(self, timestr):
+        return datetime.datetime.strptime(timestr, '%Y-%m-%d %H:%M:%S.%f')
+
     def log_task_result(self, status, result, ignored=False):
         now = time.time()
 
@@ -36,9 +38,7 @@ class CallbackModule(CallbackBase):
         else:
             playbook_path, lineno = self._task.get_path().split(':', 1)
 
-
-        with open(self.logfile, 'a') as fd:
-            json.dump({
+        rec = {
                 'when': now,
                 'playbook': playbook_path,
                 'lineno': lineno,
@@ -48,7 +48,22 @@ class CallbackModule(CallbackBase):
                 'module': result._task.action,
                 'status': status,
                 'result': result._result,
-                'ignore_errors': ignored}, fd)
+                'ignore_errors': ignored,
+        }
+
+        if 'start' in result._result:
+            time_task_start = self.parse_time(result._result['start'])
+            time_task_end = self.parse_time(result._result['end'])
+            time_task_delta = time_task_end - time_task_start
+
+            rec.update({
+                    'time_task_start': str(time_task_start),
+                    'time_task_end': str(time_task_end),
+                    'task_duration': time_task_delta.total_seconds(),
+            })
+
+        with open(self.logfile, 'a') as fd:
+            json.dump(rec, fd)
             fd.write('\n')
 
     def v2_playbook_on_start(self, playbook):

@@ -41,6 +41,7 @@
     }
 
     .result {
+      background-color: #f0f0f0;
       display: none;
       width: 100%;
     }
@@ -64,6 +65,7 @@
     <table id="tasks">
       <tr>
         <th>Offset</th>
+        <th>Duration</th>
         <th>Playbook</th>
         <th>Host</th>
         <th>Play</th>
@@ -74,6 +76,7 @@
       {% for task in tasks() if task.playbook %}
       <tr class="task status-{{ task.status }} {% if task.ignore_errors %}ignored{% endif %}">
         <td>{{ task.offset }}</td>
+        <td>{{ "%.4f"|format(task.task_duration|default(0)) }}</td>
         <td>{{ task.playbook|basename }}</td>
         <td>{{ task.host }}</td>
         <td>{{ task.play }}</td>
@@ -83,7 +86,7 @@
       </tr>
       <tr class="result">
         <td colspan="7">
-          <pre>{{ task.result|to_json(indent=2) }}</pre>
+          <pre>{{ task.result|to_json(indent=2, sort_keys=True) }}</pre>
         </td>
       </tr>
       {% endfor %}
