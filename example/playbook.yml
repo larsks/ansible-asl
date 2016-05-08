@@ -1,0 +1,24 @@
+- name: a sample play
+  hosts: localhost
+  roles:
+    - role1
+  tasks:
+    - name: "task 1"
+      debug:
+        msg: "this is task 1"
+      tags:
+        - task1
+
+    - shell: echo "this is task 2"; exit 1
+      ignore_errors: true
+      register: task2
+
+    - set_fact:
+        task2_out: "{{ task2.stdout }}"
+      when: false
+
+
+- hosts: localhost
+  tasks:
+    - debug:
+        msg: 'a task in a second play'
