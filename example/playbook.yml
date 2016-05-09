@@ -9,7 +9,8 @@
       tags:
         - task1
 
-    - shell: echo "this is task 2"; exit 1
+    - name: a shell task
+      shell: echo "this is task 2"; exit 1
       ignore_errors: true
       register: task2
 

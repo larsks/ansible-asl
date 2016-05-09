@@ -1,0 +1,11 @@
+- hosts: all
+  tasks:
+    - debug:
+        msg: this is task 1
+
+    - name: ping test
+      ping:
+
+    - include: tasks.yml
+
+- include: play.yml

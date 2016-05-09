@@ -1,0 +1,4 @@
+- hosts: all
+  tasks:
+    - name: task in an included playbook
+      shell: echo this is an included playbook

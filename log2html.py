@@ -5,22 +5,7 @@ import sys
 import os
 import datetime
 
-def read_tasks():
-    start = None
-    tasks = []
-    for line in sys.stdin:
-        task = json.loads(line)
-        time_task_start = datetime.datetime.strptime(task['time_task_start'],
-                                                     '%Y-%m-%d %H:%M:%S.%f')
-
-        if start is None:
-            start = time_task_start
-
-        task['offset'] = time_task_start - start
-
-        tasks.append(task)
-
-    return tasks
+import model
 
 def filter_to_json(val, **kwargs):
     return json.dumps(val, **kwargs)
