@@ -1,3 +1,4 @@
+import os
 import urlparse
 import logging
 from datetime import datetime
@@ -8,23 +9,37 @@ db = Database()
 
 
 class Run(db.Entity):
-    time_start = Required(datetime, default=datetime.now)
+    time_start = Optional(datetime, default=datetime.now)
     playbooks = Set('Playbook')
+    plays = Set('Play')
 
 
 class Playbook(db.Entity):
     path = Required(str)
-    time_start = Optional(datetime)
-    time_end = Optional(datetime)
-
     plays = Set('Play')
     run = Required('Run')
+
+    time_start = Optional(datetime, default=datetime.now)
+    time_end = Optional(datetime)
+
+    @property
+    def duration(self):
+        return (self.time_end - self.time_start)
 
 
 class Play(db.Entity):
     name = Optional(str)
+    uuid = Required(str)
     tasks = Set('Task')
+    run = Required('Run')
     playbook = Required('Playbook')
+
+    time_start = Optional(datetime, default=datetime.now)
+    time_end = Optional(datetime)
+
+    @property
+    def duration(self):
+        return (self.time_end - self.time_start)
 
 
 class Path(db.Entity):
@@ -38,10 +53,16 @@ class Task(db.Entity):
     action = Required(str)
     path = Optional('Path')
     lineno = Optional(int)
-    time_start = Required(datetime, default=datetime.now)
 
     play = Required('Play')
     taskresults = Set('TaskResult')
+
+    time_start = Optional(datetime, default=datetime.now)
+    time_end = Optional(datetime)
+
+    @property
+    def duration(self):
+        return (self.time_end - self.time_start)
 
 
 class TaskResult(db.Entity):
@@ -55,11 +76,12 @@ class TaskResult(db.Entity):
     result = Required(str)
     ignore_errors = Required(bool)
 
-    time_start = Optional(datetime)
+    time_start = Optional(datetime, default=datetime.now)
     time_end = Optional(datetime)
 
+    @property
     def duration(self):
-        return (self.time_end - self.time_start).total_seconds()
+        return (self.time_end - self.time_start)
 
 
 class Host(db.Entity):
@@ -83,17 +105,28 @@ def split_netloc(netloc):
     return (host, user, password)
 
 
+def infer_type(s):
+    if s.isdigit():
+        return int(s)
+    elif s.lower() in ['true', 'false']:
+        return bool(s)
+
+    return s
+
+
 # <scheme>://<netloc>/<path>;<params>?<query>#<fragment>
 def resolve_dburi(uri):
     scheme, netloc, path, params, query, frag = urlparse.urlparse(uri)
     if netloc:
         host, user, password = split_netloc(netloc)
 
-    kwargs = dict(urlparse.parse_qsl(query))
+    kwargs = dict((k, infer_type(v)) for k,v in urlparse.parse_qsl(query))
 
     if scheme == 'sqlite':
-        path = ':memory:' if not path else path[1:]
+        path = (':memory:' if not path
+                else os.path.abspath(path[1:]))
         args = (scheme, path)
+        kwargs.update({'create_db': True})
     elif scheme == 'postgres':
         kwargs.update({
             'user': user,
@@ -115,7 +148,6 @@ def resolve_dburi(uri):
 
 
 def initdb(uri):
-    sql_debug(True)
     args, kwargs = resolve_dburi(uri)
     LOG.debug('got db args=%s, kwargs=%s', args, kwargs)
     db.bind(*args, **kwargs)
