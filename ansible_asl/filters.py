@@ -10,7 +10,7 @@ def filter(name):
 
 
 @filter('format_status')
-def filter_status(val):
+def format_status(val):
     '''return a status string based on status attributes of a taskresult'''
 
     if val.failed and val.ignore_errors:
@@ -45,8 +45,14 @@ def filter_to_yaml(val, **kwargs):
     return yaml.safe_dump(val, **kwargs)
 
 
+@filter('format_datetime')
+def format_datetime(val, format='%Y/%m/%d %H:%M:%S'):
+    '''format a datetime.datetime object'''
+    return val.strftime(format)
+
+
 @filter('format_timedelta')
-def filter_timedelta(val):
+def format_timedelta(val):
     '''format a datetime.timedelta object'''
     hours, remainder = divmod(val.total_seconds(), 3600)
     minutes, seconds = divmod(remainder, 60)
