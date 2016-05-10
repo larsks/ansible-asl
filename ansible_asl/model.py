@@ -8,13 +8,27 @@ LOG = logging.getLogger('sql_logger.model')
 db = Database()
 
 
-class Run(db.Entity):
-    time_start = Required(datetime, default=datetime.now)
-    playbooks = Set('Playbook')
+class TimedEntity(object):
+    @property
+    def duration(self):
+        return (self.time_end - self.time_start)
+
+    def start(self):
+        self.time_start = datetime.now()
+
+    def stop(self):
+        self.time_end = datetime.now()
+
+
+class Run(db.Entity, TimedEntity):
+    playbook = Optional('Playbook')
     plays = Set('Play')
 
+    time_start = Optional(datetime, default=datetime.now)
+    time_end = Optional(datetime)
 
-class Playbook(db.Entity):
+
+class Playbook(db.Entity, TimedEntity):
     path = Required(str)
     plays = Set('Play')
     run = Required('Run')
@@ -22,12 +36,8 @@ class Playbook(db.Entity):
     time_start = Optional(datetime, default=datetime.now)
     time_end = Optional(datetime)
 
-    @property
-    def duration(self):
-        return (self.time_end - self.time_start)
 
-
-class Play(db.Entity):
+class Play(db.Entity, TimedEntity):
     name = Optional(str)
     uuid = Required(str)
     tasks = Set('Task')
@@ -37,17 +47,13 @@ class Play(db.Entity):
     time_start = Optional(datetime, default=datetime.now)
     time_end = Optional(datetime)
 
-    @property
-    def duration(self):
-        return (self.time_end - self.time_start)
-
 
 class Path(db.Entity):
     path = Required(str)
     tasks = Set('Task')
 
 
-class Task(db.Entity):
+class Task(db.Entity, TimedEntity):
     uuid = Required(str)
     name = Required(str)
     action = Required(str)
@@ -60,12 +66,8 @@ class Task(db.Entity):
     time_start = Optional(datetime, default=datetime.now)
     time_end = Optional(datetime)
 
-    @property
-    def duration(self):
-        return (self.time_end - self.time_start)
 
-
-class TaskResult(db.Entity):
+class TaskResult(db.Entity, TimedEntity):
     task = Required('Task')
 
     host = Required('Host')
@@ -78,10 +80,6 @@ class TaskResult(db.Entity):
 
     time_start = Optional(datetime, default=datetime.now)
     time_end = Optional(datetime)
-
-    @property
-    def duration(self):
-        return (self.time_end - self.time_start)
 
 
 class Host(db.Entity):
