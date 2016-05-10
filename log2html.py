@@ -27,8 +27,8 @@ def filter_status(val):
     return status
 
 
-def filter_format_json(val):
-    return json.dumps(json.loads(val), indent=2)
+def filter_from_json(val):
+    return json.loads(val)
 
 
 def filter_to_json(val, **kwargs):
@@ -84,7 +84,7 @@ def main():
     env.filters['basename'] = lambda x: os.path.basename(x)
     env.filters['to_json'] = filter_to_json
     env.filters['to_yaml'] = filter_to_yaml
-    env.filters['format_json'] = filter_format_json
+    env.filters['from_json'] = filter_from_json
     env.filters['timedelta'] = filter_timedelta
     env.filters['relpath'] = filter_relpath
     env.filters['status'] = filter_status
