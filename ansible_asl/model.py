@@ -74,7 +74,7 @@ class TaskResult(db.Entity):
     failed = Required(bool)
     status = Required(str)
     result = Required(str)
-    ignore_errors = Required(bool)
+    ignore_errors = Optional(bool, default=False)
 
     time_start = Optional(datetime, default=datetime.now)
     time_end = Optional(datetime)
