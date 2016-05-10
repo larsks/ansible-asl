@@ -10,6 +10,9 @@
     <script>
     $(document).ready(function(){
 
+      /*
+         Toggle the task result for a task when clicking on the task.
+       */
       $(".task-summary").click(function(){
         ele = $(this).closest('tr').next('tr');
         if (ele.css('display') == 'none')
@@ -18,11 +21,22 @@
           ele.css('display', 'none');
       });
 
+      /*
+         Hide a task result on click.
+       */
       $(".task-result").click(function(){
         $(this).css('display', 'none');
       });
 
 
+      /*
+         This implements filtering by status.  When you click on of
+         the elements in the filter, we look up the class of the element
+         that received the click and then we iterate over the
+         .task-summary tables.  If we find a matching class, we enable
+         the display of that element. For elements that don't match, we
+         hide the element *and the associated result row*.
+       */
       $(".nav li").click(function(){
         cls = $(this).attr('class');
         $(".task-summary").each(function(){
@@ -32,6 +46,7 @@
             $(this).css("display", "table-row");
           } else {
             $(this).css("display", "none");
+            $(this).closest('tr').next('tr').css("display", "none");
           }
         });
       });
