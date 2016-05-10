@@ -62,7 +62,7 @@ class CallbackModule(CallbackBase):
     @model.db_session
     def start_run(self):
         LOG.debug('START_RUN')
-        self.run = model.Run()
+        self._run = model.Run()
 
     def _get_or_create_host(self, hostname):
         host = model.Host.get(name=hostname)
@@ -110,7 +110,7 @@ class CallbackModule(CallbackBase):
             return
 
         task = model.Task[self._task.id]
-        task.time_end = datetime.now()
+        task.stop()
         self._task = None
 
     def close_play(self):
@@ -118,14 +118,14 @@ class CallbackModule(CallbackBase):
             return
 
         play = model.Play[self._play.id]
-        play.time_end = datetime.now()
+        play.stop()
         self._play = None
 
     @model.db_session
     def v2_playbook_on_start(self, playbook):
         LOG.debug('PLAYBOOK_ON_START %s', playbook._file_name)
         self._playbook = model.Playbook(path=playbook._file_name,
-                                        run=self.run.id)
+                                        run=self._run.id)
 
     @model.db_session
     def v2_playbook_on_play_start(self, play):
@@ -135,7 +135,7 @@ class CallbackModule(CallbackBase):
         self._play = model.Play(name=play.name,
                                 uuid=str(play._uuid),
                                 playbook=self._playbook.id,
-                                run=self.run.id)
+                                run=self._run.id)
 
     @model.db_session
     def v2_playbook_on_task_start(self, task, is_conditional=False):
@@ -180,12 +180,23 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_include(self, included_file):
         LOG.debug('INCLUDE %s', included_file)
 
+    def close_playbook(self):
+        LOG.debug('CLOSE_PLAYBOOK')
+        playbook = model.Playbook[self._playbook.id]
+        playbook.stop()
+
+    def close_run(self):
+        LOG.debug('CLOSE_RUN')
+        run = model.Run[self._run.id]
+        run.stop()
+
     @model.db_session
     def v2_playbook_on_stats(self, stats):
+        LOG.debug('ON_STATS')
         self.close_task()
         self.close_play()
-        playbook = model.Playbook[self._playbook.id]
-        playbook.time_end = datetime.now()
+        self.close_playbook()
+        self.close_run()
 
 
 if __name__ == '__main__':
