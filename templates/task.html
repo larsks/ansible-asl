@@ -1,0 +1,31 @@
+<tbody class="task">
+  {% set numhosts = task.taskresults|length %}
+  {% for result in task.taskresults %}
+  <tr class="task-summary exit-{{ result.status }}
+  status-{{result|status}}">
+    {% if loop.index == 1 %}
+    <td>{{task.time_start.strftime('%H:%M:%S')}}</td>
+    {% else %}
+    <td></td>
+    {% endif %}
+    <td>{{ (task.time_start - playbook.time_start)|timedelta }}</td>
+    <td>{{ result.duration|timedelta }}</td>
+    <td class="wide">{{ task.path.path|default('')|relpath }}</td>
+    <td>{{ task.name }}</td>
+    <td>{{ task.action }}</td>
+    <td>{{ result.host.name }}</td>
+    <td>
+      {{ result.status }}
+      {% if result.status == 'ok' and result.changed %} (changed){% endif %}
+      {% if result.status == 'failed' and result.ignore_errors %} (ignored){% endif %}
+    </td>
+  </tr>
+
+  <tr class="task-result">
+    <td colspan="8">
+      <pre>{{ result.result|format_json }}</pre>
+    </td>
+  </tr>
+  {% endfor %}
+</tbody>
+

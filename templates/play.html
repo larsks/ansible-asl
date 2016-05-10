@@ -1,0 +1,43 @@
+<div class="play">
+
+  <div class="play-header">
+  <h2 id="play-{{loop.index}}">{{ play.name|default(play.uuid, True) }}</h2>
+
+      <table class="meta">
+        <tr>
+          <td>Start:</td><td>{{ play.time_start }}</td>
+        </tr>
+        <tr>
+          <td>End:</td><td>{{ play.time_end }}</td>
+        </tr>
+        <tr>
+          <td>Duration:</td><td>{{ play.duration|timedelta }}</td>
+        </tr>
+      </table>
+  </div>
+
+  <div class="play-content">
+  <table class="tasks">
+    <thead>
+      <tr>
+        <th>Timestamp</th>
+        <th>Offset</th>
+        <th>Duration</th>
+        <th>Playbook</th>
+        <th>Task</th>
+        <th>Action</th>
+        <th>Host</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+
+    {% for task in play.tasks.select().order_by(model.Task.id)
+    if task.action != 'include' %}
+    {% include "task.html" %}
+    {% endfor %}
+  </table>
+  </div>
+
+  <div class="play-footer">
+  </div>
+</div>

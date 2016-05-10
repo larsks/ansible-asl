@@ -1,0 +1,77 @@
+{% set playbook = (run.playbooks|list).0 %}
+<html>
+  <head>
+    <meta http-equiv="Content-Type"
+    content="text/html; charset=utf-8"></meta>
+    <title>{{playbook.path}}</title>
+    <link rel="stylesheet" href="style.css"></link>
+
+    <script src="jquery-2.2.3.min.js"></script>
+    <script>
+    $(document).ready(function(){
+
+      $(".task-summary").click(function(){
+        ele = $(this).closest('tr').next('tr');
+        if (ele.css('display') == 'none')
+          ele.css('display', 'table-row');
+        else
+          ele.css('display', 'none');
+      });
+
+      $(".task-result").click(function(){
+        $(this).css('display', 'none');
+      });
+
+
+      $(".nav li").click(function(){
+        cls = $(this).attr('class');
+        $(".task-summary").each(function(){
+          if (cls == "status-all") {
+            $(this).css("display", "table-row");
+          } else if ($(this).hasClass(cls)) {
+            $(this).css("display", "table-row");
+          } else {
+            $(this).css("display", "none");
+          }
+        });
+      });
+    });
+    </script>
+  </head>
+
+  <body>
+    <div class="nav no-print">
+      <p>Filter by status</p>
+      <ul class="menu">
+        <li class="status-all">All</li>
+        <li class="status-ok">OK</li>
+        <li class="status-changed">Changed</li>
+        <li class="status-failed">Failed</li>
+        <li class="status-ignored">Ignored</li>
+        <li class="status-skipped">Skipped</li>
+      </ul>
+    </div>
+
+    <div class="run">
+      <h1>{{ playbook.path }}</h2>
+
+      <table class="meta">
+        <tr>
+          <td>Start:</td><td>{{ playbook.time_start }}</td>
+        </tr>
+        <tr>
+          <td>End:</td><td>{{ playbook.time_end }}</td>
+        </tr>
+        <tr>
+          <td>Duration:</td><td>{{ playbook.duration|timedelta }}</td>
+        </tr>
+      </table>
+
+      {% for play in run.plays.select() %}
+      {% set playnum = loop.index %}
+      {% include "play.html" %}
+      {% endfor %}
+    </div>
+  </body>
+</html>
+
