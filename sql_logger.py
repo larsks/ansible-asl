@@ -9,7 +9,7 @@ import json
 from ansible.plugins.callback import CallbackBase
 from ansible.constants import load_config_file
 
-import model
+from ansible_asl import model
 
 DEFAULT_DBURI = 'sqlite://:memory:?create_db=True'
 
@@ -39,7 +39,9 @@ class CallbackModule(CallbackBase):
         dburi = None
         cfg, cfgpath = load_config_file()
 
-        if cfg:
+        if (cfg
+                and cfg.has_section('sql_logger')
+                and cfg.has_option('sql_logger', 'database')):
             dburi = cfg.get('sql_logger', 'database')
 
         if dburi is None:
@@ -79,11 +81,16 @@ class CallbackModule(CallbackBase):
     @model.db_session
     def log_task_result(self, status, result, ignore_errors=False):
         LOG.debug('TASK_COMPLETE %s %s', result._task.action, status)
-        host = self._get_or_create_host(result._host.get_name())
 
+        host = self._get_or_create_host(result._host.get_name())
         task = model.Task[self._task.id]
+
         time_start = task.time_start
         time_end = datetime.now()
+
+        if ignore_errors is None:
+            LOG.warn('ignore_errors was None')
+            ignore_errors = False
 
         result = model.TaskResult(
             host=host,
@@ -98,26 +105,46 @@ class CallbackModule(CallbackBase):
             result=json.dumps(result._result)
         )
 
+    def close_task(self):
+        if not self._task:
+            return
+
+        task = model.Task[self._task.id]
+        task.time_end = datetime.now()
+        self._task = None
+
+    def close_play(self):
+        if not self._play:
+            return
+
+        play = model.Play[self._play.id]
+        play.time_end = datetime.now()
+        self._play = None
+
     @model.db_session
     def v2_playbook_on_start(self, playbook):
         LOG.debug('PLAYBOOK_ON_START %s', playbook._file_name)
         self._playbook = model.Playbook(path=playbook._file_name,
-                                        time_start=datetime.now(),
                                         run=self.run.id)
 
     @model.db_session
     def v2_playbook_on_play_start(self, play):
         LOG.debug('PLAY_START %s', play.get_name())
+        self.close_play()
+
         self._play = model.Play(name=play.name,
-                                playbook=self._playbook.id)
+                                uuid=str(play._uuid),
+                                playbook=self._playbook.id,
+                                run=self.run.id)
 
     @model.db_session
     def v2_playbook_on_task_start(self, task, is_conditional=False):
         LOG.debug('TASK_START %s', task.get_name())
+        self.close_task()
+
         if self._play is None:
             LOG.error('play is none!')
 
-        uuid = str(task._uuid)
         play = model.Play[self._play.id]
 
         pathspec = task.get_path()
@@ -131,7 +158,7 @@ class CallbackModule(CallbackBase):
             lineno = 0
 
         self._task = model.Task(name=task.get_name(),
-                                uuid=uuid,
+                                uuid=str(task._uuid),
                                 action=task.action,
                                 path=path,
                                 lineno=lineno,
@@ -155,6 +182,8 @@ class CallbackModule(CallbackBase):
 
     @model.db_session
     def v2_playbook_on_stats(self, stats):
+        self.close_task()
+        self.close_play()
         playbook = model.Playbook[self._playbook.id]
         playbook.time_end = datetime.now()
 
