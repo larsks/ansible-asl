@@ -8,42 +8,9 @@ import os
 import datetime
 
 from ansible_asl import model
+from ansible_asl import filters
 
 LOG = logging.getLogger(__name__)
-
-
-def filter_status(val):
-    if val.failed and val.ignore_errors:
-        status = 'ignored'
-    elif val.failed:
-        status = 'failed'
-    elif val.changed:
-        status = 'changed'
-    elif val.skipped:
-        status = 'skipped'
-    else:
-        status = 'ok'
-
-    return status
-
-
-def filter_from_json(val):
-    return json.loads(val)
-
-
-def filter_to_json(val, **kwargs):
-    return json.dumps(val, **kwargs)
-
-
-def filter_to_yaml(val, **kwargs):
-    return yaml.safe_dump(val, **kwargs)
-
-
-def filter_timedelta(val):
-    hours, remainder = divmod(val.total_seconds(), 3600)
-    minutes, seconds = divmod(remainder, 60)
-
-    return '%02d:%02d:%02.2f' % (hours, minutes, seconds)
 
 
 def filter_relpath(val):
@@ -81,13 +48,8 @@ def main():
     model.initdb(args.dburi)
 
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(args.template_dir))
-    env.filters['basename'] = lambda x: os.path.basename(x)
-    env.filters['to_json'] = filter_to_json
-    env.filters['to_yaml'] = filter_to_yaml
-    env.filters['from_json'] = filter_from_json
-    env.filters['timedelta'] = filter_timedelta
     env.filters['relpath'] = filter_relpath
-    env.filters['status'] = filter_status
+    filters.register_filters(env)
     template = env.get_template('ansible_run.html')
 
     with model.db_session:
