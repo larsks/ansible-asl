@@ -1,3 +1,30 @@
+{% macro format_result(result) -%}
+{% if 'item' in result %}
+<div class="result-item">
+  <p><strong>item</strong></p>
+  <pre>{{ result.item|to_json(indent=2) }}</pre>
+</div>
+{% endif %}
+{% if 'cmd' in result %}
+<div class="result-command">
+  <p><strong>command</strong></p>
+  {% if result.cmd is string %}
+  <pre>{{ result.cmd }}</pre>
+  {% else %}
+  <pre>{{ result.cmd|join(' ') }}</pre>
+  {% endif %}
+</div>
+{% endif %}
+{% for key in ['stdout', 'stderr'] %}
+{% if result[key]|default('') %}
+<div class="result-{{key}}">
+<p><strong>{{ key }}</strong></p>
+<pre>{{ result[key] }}</pre>
+</div>
+{% endif %}
+{% endfor %}
+{%- endmacro %}
+
 <tbody class="task">
   {% set numhosts = task.taskresults|length %}
   {% for result in task.taskresults %}
@@ -23,7 +50,22 @@
 
   <tr class="task-result">
     <td colspan="8">
-      <pre>{{ result.result|format_json }}</pre>
+      {% set result_dict = result.result|from_json %}
+
+      {% if 'results' in result_dict %}
+      <ol>
+        {% for result in result_dict.results %}
+        <li>{{ format_result(result) }}</li>
+        {% endfor %}
+      </ol>
+      {% else %}
+      {{ format_result(result_dict) }}
+      {% endif %}
+
+      <div class="result-all">
+        <p><strong>result</strong></p>
+        <pre>{{ result_dict|to_json(indent=2) }}</pre>
+      </div>
     </td>
   </tr>
   {% endfor %}

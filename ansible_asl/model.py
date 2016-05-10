@@ -9,7 +9,7 @@ db = Database()
 
 
 class Run(db.Entity):
-    time_start = Optional(datetime, default=datetime.now)
+    time_start = Required(datetime, default=datetime.now)
     playbooks = Set('Playbook')
     plays = Set('Play')
 
@@ -120,7 +120,8 @@ def resolve_dburi(uri):
     if netloc:
         host, user, password = split_netloc(netloc)
 
-    kwargs = dict((k, infer_type(v)) for k,v in urlparse.parse_qsl(query))
+    kwargs = dict((k, infer_type(v))
+                  for k, v in urlparse.parse_qsl(query))
 
     if scheme == 'sqlite':
         path = (':memory:' if not path
