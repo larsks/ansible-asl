@@ -1,0 +1,155 @@
+@color-ok:              #336600;
+@color-changed:         #ffcc00;
+@color-failed:          red;
+@color-ignored:         #660066;
+@color-skipped:         #0099cc;
+@color-lightgrey:       #fbfbfb;
+
+@color-background:      white;
+@color-foreground:      black;
+
+@color-code-background: #f0f0f0;
+@color-code-foreground: black;
+
+ul.menu {
+    padding: 0;
+
+    li {
+        display: inline;
+        border-radius: 4px;
+        padding: 1ex;
+        list-style-type: none;
+    }
+}
+
+body {
+    margin: 1in;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    background-color: @color-background;
+    color: @color-foreground;
+}
+
+h1, h2, h3, h4 {
+    font-family: Baskerville,Baskerville Old Face,Hoefler Text,Garamond,Times New Roman,serif;
+}
+
+.nav {
+    border: thin solid black;
+    border-radius: 4px;
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 100;
+    margin: 1ex;
+    padding: 1ex;
+    background-color: white;
+
+    p {
+        padding: 0;
+        margin: 0;
+    }
+}
+
+.tasks {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.task {
+
+    &:nth-child(even) {
+        background-color: @color-lightgrey;
+    }
+
+    &:nth-child(odd) {
+        background-color: @color-background;
+    }
+
+    td {
+        padding: 1ex;
+        width: 10%;
+    }
+
+    td.wide {
+        width: 30%;
+    }
+}
+
+.task-result {
+    display: none;
+}
+
+.status-ok {
+    tr& {
+        color: @color-ok;
+    }
+
+    li& {
+        background-color: @color-ok;
+    }
+}
+
+.status-failed {
+    tr& {
+        color: @color-failed;
+    }
+
+    li& {
+        background-color: @color-failed;
+    }
+}
+
+.status-changed {
+    tr& {
+        color: @color-changed;
+    }
+
+    li& {
+        background-color: @color-changed;
+    }
+}
+
+.status-skipped {
+    tr& {
+        color: @color-skipped;
+    }
+
+    li& {
+        background-color: @color-skipped;
+    }
+}
+
+.status-ignored {
+    tr& {
+        color: @color-ignored;
+    }
+
+    li& {
+        background-color: @color-ignored;
+    }
+}
+
+
+li.status-all {
+    border: thin solid black;
+}
+
+pre {
+    background: @color-code-background;
+    color: @color-code-foreground;
+    padding: 1ex;
+    margin-left: 4ex;
+    margin-right: 4ex;
+}
+
+@media print {
+    .no-print, .no-print *
+    {
+        display: none !important;
+    }
+}
+
+.meta {
+    margin-bottom: 4ex;
+}
+
